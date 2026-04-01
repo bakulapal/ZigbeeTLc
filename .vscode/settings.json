@@ -16,4 +16,8 @@
             "tooltip": "🧹 Start a \"clean\" action"
         }
     ],
-}
+    "files.associations": {
+        "sensors.h": "c",
+        "i2c_drv.h": "c"
+    },
+}

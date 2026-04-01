@@ -77,7 +77,7 @@ int main(void){
 			tick = clock_time();
 		}
 #endif
-
+		//light_on();
     	ev_main();
 
 #if (MODULE_WATCHDOG_ENABLE)

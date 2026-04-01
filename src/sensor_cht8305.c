@@ -48,11 +48,11 @@ void init_sensor(void) {
 			send_i2c_bytes(sensor_i2c_addr, buf, 3);
 			pm_wait_ms(SENSOR_RESET_TIMEOUT_ms);
 			// Configure
-			buf[0] = CHT8305_REG_CFG;
-			buf[1] = (CHT8305_CFG_CLOCK_STRETCH | CHT8305_CFG_MODE) >> 8;
-			buf[2] = (CHT8305_CFG_CLOCK_STRETCH | CHT8305_CFG_MODE) & 0xff;
-			send_i2c_bytes(sensor_i2c_addr, buf, 3);
-			pm_wait_ms(SENSOR_RESET_TIMEOUT_ms);
+			//buf[0] = CHT8305_REG_CFG;
+			//buf[1] = (CHT8305_CFG_CLOCK_STRETCH | CHT8305_CFG_MODE) >> 8;
+			//buf[2] = (CHT8305_CFG_CLOCK_STRETCH | CHT8305_CFG_MODE) & 0xff;
+			//send_i2c_bytes(sensor_i2c_addr, buf, 3);
+			//pm_wait_ms(SENSOR_RESET_TIMEOUT_ms);
 
 			send_i2c_byte(sensor_i2c_addr, CHT8305_REG_TMP); // start measure T/H
 			pm_wait_ms(SENSOR_MEASURING_TIMEOUT_ms);
@@ -64,8 +64,8 @@ void init_sensor(void) {
 }
 
 __attribute__((optimize("-Os"))) int read_sensor(void) {
-	u32 _temp, i = 3;
-	u8 reg_data[4];
+	u32 _temp, i = 1;
+	u8 reg_data[2];
 	battery_detect();
 	if (sensor_i2c_addr != 0) {
 		while(i--) {
@@ -73,9 +73,27 @@ __attribute__((optimize("-Os"))) int read_sensor(void) {
 				_temp = (reg_data[0] << 8) | reg_data[1];
 				if(_temp == 0xffff)
 					break;
-				measured_data.temp = ((u32)(_temp * 16500) >> 16) - 4000 + g_zcl_thermostatUICfgAttrs.temp_offset; // x 0.01 C
-				_temp = (reg_data[2] << 8) | reg_data[3];
-				measured_data.humi = ((u32)(_temp * 10000) >> 16) + g_zcl_thermostatUICfgAttrs.humi_offset; // x 0.01 %
+				measured_data.temp = ((u32)(_temp * 25600) >> 16) + g_zcl_thermostatUICfgAttrs.temp_offset; // x 0.01 C
+				
+				send_i2c_byte(sensor_i2c_addr, CHT8305_REG_HMD); // start measure T/H
+				// measured_data.count++;
+				goto exit_loop;
+			}
+		}
+		send_i2c_byte(sensor_i2c_addr, CHT8305_REG_HMD); // start measure T/H
+	}
+	exit_loop:
+	i=1;
+	if (sensor_i2c_addr != 0) {
+		while(i--) {
+			if (read_i2c_bytes(sensor_i2c_addr, reg_data, sizeof(reg_data)) == 0) {
+				_temp = (reg_data[0] << 8) | reg_data[1];
+				if(_temp == 0xffff)
+					break;
+				measured_data.humi = ((u32)((_temp & 0x7FFF) * 10000) >> 15) + g_zcl_thermostatUICfgAttrs.humi_offset; // x 0.01 %
+				//measured_data.temp = reg_data[0];
+				//measured_data.humi = reg_data[1];
+
 				if (measured_data.humi < 0)
 					measured_data.humi = 0;
 				else if	(measured_data.humi > 9999)

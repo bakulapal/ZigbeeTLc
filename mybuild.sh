@@ -1,0 +1,14 @@
+#/bin/bash
+
+rm /bin/*ZTH01YZTUZ*
+SWVER=_v0123
+
+rm /bin/*BOARD_TS0201_TZ3000*
+make -s -j clean
+make -s -j VERSION_BIN=$SWVER PROJECT_NAME=BOARD_TS0201_TZ3000 POJECT_DEF="-DBOARD=BOARD_TS0201_TZ3000"
+python make/zb_bin_ota.py bin/BOARD_TS0201_TZ3000$SWVER.bin bin/BOARD_TS0201_TZ3000$SWVER -m0x1141 -i0xd3a3 -v0x01993001 -s"Tuya to ZigbeeTlc"
+
+
+
+
+
